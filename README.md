@@ -1,0 +1,2 @@
+# configbaruu
+Belajar
