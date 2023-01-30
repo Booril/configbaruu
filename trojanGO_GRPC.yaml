@@ -1,0 +1,190 @@
+﻿port: 7890
+socks-port: 7891
+redir-port: 7892
+tproxy-port: 7893
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+ipv6: false
+external-controller: 127.0.0.1:9090
+external-ui: folder
+interface-name: en0
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  default-nameserver:
+    - 1.1.1.1
+    - 1.0.0.1
+  nameserver:
+    - 1.1.1.1 
+    - 1.0.0.1 
+    - tls://dns.rubyfish.cn:853 
+    - https://1.1.1.1/dns-query 
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+proxies:
+- name: "AKRAB VIP"
+  type: vmess
+  server: note0.microsoft.com
+  port: 443
+  uuid: ff861380-2d76-4405-a4f5-b18ed8816920
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: true
+  skip-cert-verify: true
+  servername: vmess-ctb-sg01.globalssh.xyz
+  network: ws
+  ws-opts:
+   path: /vmess-ws
+   headers:
+    Host: vmess-ctb-sg01.globalssh.xyz
+   max-early-data: 2048
+   early-data-header-name: Sec-WebSocket-Protocol
+
+- name: "AKRAB GRPC"
+  server: note0.microsoft.com
+  port: 8443
+  type: vmess
+  uuid: 8dd857f4-9a08-437f-a10e-bbd8dded4b3a
+  alterId: 0
+  cipher: auto
+  tls: true
+  skip-cert-verify: true
+  servername: do2.kitu.xyz
+  network: grpc
+  grpc-opts:
+   grpc-mode: gun
+   grpc-service-name: v2ray-vmess-grpc
+   headers:
+    Host: do2.kitu.xyz
+  udp: true
+
+- name: "LIFETIME"
+  type: vmess
+  server: note0.microsoft.com
+  port: 8443
+  uuid: 8dd857f4-9a08-437f-a10e-bbd8dded4b3a
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: true
+  skip-cert-verify: true
+  servername: host
+  network: ws
+  ws-opts:
+   path: /vmess-ws
+   headers:
+    Host: host
+   max-early-data: 2048
+   early-data-header-name: Sec-WebSocket-Protocol
+
+- name: "TROJAN GRPC"
+  server: 104.26.7.171
+  port: 443
+  type: trojan
+  password: rohman515
+  skip-cert-verify: true
+  sni: iddk.dklongtong.xyz
+  network: grpc
+  grpc-opts:
+   grpc-mode: gun/multi
+   grpc-service-name: Trojan-GRPC
+  udp: true
+
+- name: "MBARIQ GRPC"
+  server: note0.microsoft.com
+  port: 443
+  type: vmess
+  uuid: 4f4dcaa0-54c9-480d-ac5f-f8a82365b838
+  alterId: 0
+  cipher: auto
+  tls: true
+  skip-cert-verify: true
+  servername: do7.kitu.xyz
+  network: grpc
+  grpc-opts:
+   grpc-mode: gun
+   grpc-service-name: v2ray-vmess-grpc
+   headers:
+    Host:do7.kitu.xyz
+  udp: true
+
+- name: "TROJAN-GO"
+  server: 104.26.7.171
+  port: 443
+  type: trojan
+  password: rohman515
+  skip-cert-verify: true
+  sni: iddk.dklongtong.xyz
+  network: ws
+  ws-opts:
+   path: /trojan
+   headers:
+    Host: iddk.dklongtong.xyz
+  udp: true
+
+proxy-groups:
+  - name: Manual Server
+    type: select
+    proxies:
+      - "Best Ping ✓"
+      - "LOAD BALANCE"
+      - "AKRAB VIP"
+      - "AKRAB GRPC"
+      - "LIFETIME"
+      - "TROJAN GRPC"
+      - "MBARIQ GRPC"
+      - "TROJAN-GO"
+  - name: Best Ping ✓
+    type: url-test
+    proxies:
+      - "AKRAB VIP"
+      - "AKRAB GRPC"
+      - "LIFETIME"
+      - "TROJAN GRPC"
+      - "MBARIQ GRPC"
+      - "TROJAN-GO"
+    url: https://www.google.com/
+    interval: 300
+  - name: "LOAD BALANCE"
+    type: load-balance
+    proxies:
+      - "AKRAB VIP"
+      - "AKRAB GRPC"
+      - "LIFETIME"
+      - "TROJAN GRPC"
+      - "MBARIQ GRPC"
+      - "TROJAN-GO"
+    url: 'https://www.google.com/'
+    interval: 300
+rules:
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - IP-CIDR6,fd00::/8,DIRECT,no-resolve
+  - DOMAIN-SUFFIX,ad.com,REJECT
+  - DOMAIN,analytics.google.com,REJECT
+  - DOMAIN,analyticsinsights-pa.googleapis.com,REJECT
+  - DOMAIN,analyticsreporting.googleapis.com,REJECT
+  - DOMAIN-SUFFIX,doubleclick.net,REJECT
+  - DOMAIN-SUFFIX,googleadservices.com,REJECT
+  - DOMAIN-SUFFIX,googleadsserving.cn,REJECT
+  - DOMAIN-SUFFIX,googlesyndication.com,REJECT
+  - DOMAIN-SUFFIX,googletagmanager.com,REJECT
+  - DOMAIN-SUFFIX,googletagservices.com,REJECT
+  - DOMAIN-SUFFIX,google-analytics.com,REJECT
+  - DOMAIN-KEYWORD,adservice,REJECT
+  - DOMAIN-KEYWORD,analytics,REJECT
+  - DOMAIN-KEYWORD,analysis,REJECT
+  - SRC-IP-CIDR,192.168.1.201/32,DIRECT
+  - IP-CIDR,198.18.0.1/16,REJECT,no-resolve
+  - GEOIP,IR,DIRECT
+  - MATCH,, Manual Server , dns-failed
+
